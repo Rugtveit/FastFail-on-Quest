@@ -60,7 +60,7 @@ std::string getSceneStr(Scene scene)
 }
 
 std::string game = "GameCore";
-bool modEnabled = true;
+bool modEnabled = Config.enabled;
 void OnGameSceneLoaded();
 Il2CppObject* FindObjectsOfTypeAllFirst2(std::string_view nameSpace, std::string_view className)
 {
@@ -103,7 +103,7 @@ MAKE_HOOK_OFFSETLESS(BlocksBlade_Start, void, Il2CppObject* self)
 {
     getLogger().info("Works?");
     failSkip.hasFailed = hasFailed;
-    failSkip.autoSkip = false;
+    failSkip.autoSkip = Config.autoSkip;
     failSkip.Awake();
 }
 
