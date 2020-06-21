@@ -21,6 +21,37 @@ const Logger& getLogger() {
   return logger;
 }
 
+std::string getSceneStr(Scene scene)
+{
+    Il2CppString* sceneStr = CRASH_UNLESS(il2cpp_utils::RunMethod<Il2CppString*>("UnityEngine.SceneManagement", "Scene", "GetNameInternal", scene.m_Handle));
+    if(sceneStr != nullptr) return to_utf8(csstrtostr(sceneStr));
+    return nullptr;
+}
+
+std::string game = "GameCore";
+bool modEnabled = false;
+void OnGameSceneLoaded();
+//This is to do same as BS_Utils.Utilities.BSEvents.gameSceneLoaded
+MAKE_HOOK_OFFSETLESS(SceneManagerOnActiveSceneChanged, void, Scene previousActiveScene, Scene newActiveScene)
+{
+    std::string previousActiveSceneName = getSceneStr(previousActiveScene);
+    std::string newActiveSceneName = getSceneStr(newActiveScene);
+    if(newActiveSceneName == game)
+    {
+        OnGameSceneLoaded();
+    }
+}
+
+
+void OnGameSceneLoaded()
+{
+    if(!modEnabled) return nullptr;
+    // Creating GameObject with BlocksBlade since CustomTypes isn't a thing right now so we just hook up to it and use it as CustomType
+    Il2CppObject* failSkipGO = CRASH_UNLESS(il2cpp_utils::New("UnityEngine", "GameObject", il2cpp_utils::createcsstr("FailSkip Behavior")));
+    CRASH_UNLESS(il2cpp_utils::RunMethod(failSkipGO, "AddComponent", il2cpp_utils::GetSystemType("", "BlocksBlade"))); 
+}
+
+
 extern "C" void setup(ModInfo &info)
 {
     info.id = "FastFail";
