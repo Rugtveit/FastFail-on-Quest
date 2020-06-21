@@ -1,0 +1,32 @@
+{
+    "id": "fastfail",
+    "name": "FastFail",
+    "author": "Rugtveit",
+    "description": [
+        
+        "Original Creator: PulseLane
+        Beat Saber mod to make failing a song not take as long (~2s shorter)
+        By default the level failed animation will auto-skip, but there is a setting to make it so you must press the menu (pause) button to skip it."
+        
+    ],
+    "category": "Gameplay",
+    "gameVersion": "1.10.0",
+    "version": "0.1.0",
+    "platform": "Quest",
+    "components": [
+        {
+            "type": "HookMod",
+            "installAction": {
+                "installLibraryFile": "libfastfail.so"
+            },
+            "uninstallAction": {
+                "removeLibraryFile": "libfastfail.so"
+            }
+        },
+	{
+            "type": "FileCopyMod",
+            "sourceFileName": "libbeatsaber-hook_2019_3_0f6_0_1_0",
+            "targetRootedPathAndFileName": "/sdcard/Android/data/com.beatgames.beatsaber/files/libs/libbeatsaber-hook_2019_3_0f6_0_1_0"
+        },
+    ]
+}
