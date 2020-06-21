@@ -29,8 +29,27 @@ static struct Config_t
     bool autoSkip = true;
 } Config;
 
+void SaveConfig()
+{
+    getConfig().config.RemoveAllMembers();
+    getConfig().config.SetObject();
+    auto& allocator = getConfig().config.GetAllocator();
+    getConfig().config.AddMember("enabled", Config.enabled, allocator);
+    getConfig().config.AddMember("autoSkip", Config.autoSkip, allocator);
+    getConfig().Write();
+}
 
+bool LoadConfig()
+{
+    getConfig().Load();
 
+    if(getConfig().config.HasMember("enabled") && getConfig().config["enabled"].IsBool()) Config.enabled = getConfig().config["enabled"].GetBool(); 
+    else return false;
+    if(getConfig().config.HasMember("autoSkip") && getConfig().config["autoSkip"].IsBool()) Config.autoSkip = getConfig().config["autoSkip"].GetBool(); 
+    else return false;
+
+    return true;
+}
 
 
 std::string getSceneStr(Scene scene)
@@ -107,6 +126,7 @@ extern "C" void setup(ModInfo &info)
 // This function is called when the mod is loaded for the first time, immediately after il2cpp_init.
 extern "C" void load()
 {
+    if(!LoadConfig()) SaveConfig();
     getLogger().debug("Installing FastFail!");
     INSTALL_HOOK_OFFSETLESS(BlocksBlade_Start, il2cpp_utils::FindMethodUnsafe("", "BlocksBlade", "Start", 0));
     INSTALL_HOOK_OFFSETLESS(BlocksBlade_Update, il2cpp_utils::FindMethodUnsafe("", "BlocksBlade", "Update", 0));
