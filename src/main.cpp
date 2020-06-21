@@ -25,21 +25,32 @@ const Logger& getLogger() {
 
 std::string getSceneStr(Scene scene)
 {
-    Il2CppString* sceneStr = CRASH_UNLESS(il2cpp_utils::RunMethod<Il2CppString*>("UnityEngine.SceneManagement", "Scene", "GetNameInternal", scene.m_Handle));
+    Il2CppString* sceneStr = CRASH_UNLESS(il2cpp_utils::RunMethod<Il2CppString*>(il2cpp_utils::GetClassFromName("UnityEngine.SceneManagement", "Scene"), "GetNameInternal", scene.m_Handle));
     if(sceneStr != nullptr) return to_utf8(csstrtostr(sceneStr));
     return nullptr;
 }
 
 std::string game = "GameCore";
-bool modEnabled = false;
+bool modEnabled = true;
 void OnGameSceneLoaded();
+Il2CppObject* FindObjectsOfTypeAllFirst2(std::string_view nameSpace, std::string_view className)
+{
+    Array<Il2CppObject*>* ObjectArray = CRASH_UNLESS(il2cpp_utils::RunMethod<Array<Il2CppObject*>*>("UnityEngine", "Resources", "FindObjectsOfTypeAll", il2cpp_utils::GetSystemType(nameSpace, className)));
+    if(ObjectArray != nullptr) return ObjectArray->values[0];
+    return nullptr;
+}
 //This is to do same as BS_Utils.Utilities.BSEvents.gameSceneLoaded
 MAKE_HOOK_OFFSETLESS(SceneManagerOnActiveSceneChanged, void, Scene previousActiveScene, Scene newActiveScene)
 {
-    std::string previousActiveSceneName = getSceneStr(previousActiveScene);
+    SceneManagerOnActiveSceneChanged(previousActiveScene, newActiveScene);
     std::string newActiveSceneName = getSceneStr(newActiveScene);
     if(newActiveSceneName == game)
     {
+        Il2CppObject* gameScenesManager = FindObjectsOfTypeAllFirst2("", "GameScenesManager");
+        if(gameScenesManager != nullptr)
+        {
+
+        }
         OnGameSceneLoaded();
     }
 }
@@ -53,9 +64,17 @@ void OnGameSceneLoaded()
     CRASH_UNLESS(il2cpp_utils::RunMethod(failSkipGO, "AddComponent", il2cpp_utils::GetSystemType("", "BlocksBlade"))); 
 }
 
+void hasFailed()
+{
+    failSkip._hasFailed = true;
+}
+
+
 MAKE_HOOK_OFFSETLESS(BlocksBlade_Start, void, Il2CppObject* self)
 {
-    failSkip.autoSkip = false;
+    getLogger().info("Works?");
+    failSkip.hasFailed = hasFailed;
+    failSkip.autoSkip = true;
     failSkip.Awake();
 }
 
@@ -81,5 +100,6 @@ extern "C" void load()
     getLogger().debug("Installing FastFail!");
     INSTALL_HOOK_OFFSETLESS(BlocksBlade_Start, il2cpp_utils::FindMethodUnsafe("", "BlocksBlade", "Start", 0));
     INSTALL_HOOK_OFFSETLESS(BlocksBlade_Update, il2cpp_utils::FindMethodUnsafe("", "BlocksBlade", "Update", 0));
+    INSTALL_HOOK_OFFSETLESS(SceneManagerOnActiveSceneChanged, il2cpp_utils::FindMethodUnsafe("UnityEngine.SceneManagement", "SceneManager", "Internal_ActiveSceneChanged", 2));
     getLogger().debug("Installed FastFail!");
 }

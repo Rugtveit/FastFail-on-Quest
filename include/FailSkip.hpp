@@ -14,8 +14,8 @@ class failskip : Il2CppObject
         void Awake();
         bool autoSkip;
         bool _hasFailed = false;
+        function_ptr_t<void> hasFailed;
     private:
-        static void hasFailed(failskip* obj, Il2CppObject* asyncOp);
         Il2CppObject* _standardLevelGameplayManager; //StandardLevelGameplayManager
         Il2CppObject* _missionLevelGameplayManager; //MissionLevelGameplayManager
         Il2CppObject* _standardLevelFailedController; //StandardLevelFailedController
