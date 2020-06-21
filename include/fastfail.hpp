@@ -6,7 +6,7 @@
 #include "../extern/beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 #include "../extern/beatsaber-hook/shared/utils/il2cpp-functions.hpp"
 
-class failskip : Il2CppObject
+class fastfail : Il2CppObject
 {
     public:
         Il2CppObject* classInstance;

@@ -6,12 +6,12 @@
 #include "../extern/beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 #include "../extern/beatsaber-hook/shared/utils/il2cpp-functions.hpp"
 #include "../extern/beatsaber-hook/shared/config/config-utils.hpp"
-#include "../include/FailSkip.hpp"
+#include "../include/fastfail.hpp"
 
 
 
 static ModInfo modInfo;
-failskip failSkip;
+fastfail failSkip;
 
 static Configuration& getConfig() {
     static Configuration config(modInfo);
@@ -22,6 +22,16 @@ const Logger& getLogger() {
   static const Logger& logger(modInfo);
   return logger;
 }
+
+static struct Config_t 
+{
+    bool enabled = true;
+    bool autoSkip = true;
+} Config;
+
+
+
+
 
 std::string getSceneStr(Scene scene)
 {
@@ -74,7 +84,7 @@ MAKE_HOOK_OFFSETLESS(BlocksBlade_Start, void, Il2CppObject* self)
 {
     getLogger().info("Works?");
     failSkip.hasFailed = hasFailed;
-    failSkip.autoSkip = true;
+    failSkip.autoSkip = false;
     failSkip.Awake();
 }
 

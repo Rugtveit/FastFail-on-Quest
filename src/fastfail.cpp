@@ -1,4 +1,4 @@
-#include "../include/FailSkip.hpp"
+#include "../include/fastfail.hpp"
 
 Il2CppObject* FindObjectsOfTypeAllFirst(std::string_view nameSpace, std::string_view className)
 {
@@ -9,7 +9,7 @@ Il2CppObject* FindObjectsOfTypeAllFirst(std::string_view nameSpace, std::string_
 
 Il2CppObject* PauseMenuManager = nullptr;
 
-void failskip::Awake()
+void fastfail::Awake()
 {
     _skipped = false;
     _hasFailed = false;
@@ -58,7 +58,7 @@ void failskip::Awake()
     _vrControllersInputManager = CRASH_UNLESS(il2cpp_utils::GetFieldValue(PauseMenuManager, "_vrControllersInputManager"));
 }
 
-void failskip::Update()
+void fastfail::Update()
 {
     bool controllerPressed;
     if(_vrControllersInputManager != nullptr)
