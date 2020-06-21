@@ -11,7 +11,7 @@
 
 
 static ModInfo modInfo;
-fastfail failSkip;
+
 
 static Configuration& getConfig() {
     static Configuration config(modInfo);
@@ -29,82 +29,37 @@ static struct Config_t
     bool autoSkip = true;
 } Config;
 
-void SaveConfig()
-{
-    getConfig().config.RemoveAllMembers();
-    getConfig().config.SetObject();
-    auto& allocator = getConfig().config.GetAllocator();
-    getConfig().config.AddMember("enabled", Config.enabled, allocator);
-    getConfig().config.AddMember("autoSkip", Config.autoSkip, allocator);
-    getConfig().Write();
-}
 
-bool LoadConfig()
-{
-    getConfig().Load();
-
-    if(getConfig().config.HasMember("enabled") && getConfig().config["enabled"].IsBool()) Config.enabled = getConfig().config["enabled"].GetBool(); 
-    else return false;
-    if(getConfig().config.HasMember("autoSkip") && getConfig().config["autoSkip"].IsBool()) Config.autoSkip = getConfig().config["autoSkip"].GetBool(); 
-    else return false;
-
-    return true;
-}
-
-
-std::string getSceneStr(Scene scene)
-{
-    Il2CppString* sceneStr = CRASH_UNLESS(il2cpp_utils::RunMethod<Il2CppString*>(il2cpp_utils::GetClassFromName("UnityEngine.SceneManagement", "Scene"), "GetNameInternal", scene.m_Handle));
-    if(sceneStr != nullptr) return to_utf8(csstrtostr(sceneStr));
-    return nullptr;
-}
-
-std::string game = "GameCore";
-bool modEnabled = Config.enabled;
+std::string getSceneStr(Scene scene);
 void OnGameSceneLoaded();
-Il2CppObject* FindObjectsOfTypeAllFirst2(std::string_view nameSpace, std::string_view className)
-{
-    Array<Il2CppObject*>* ObjectArray = CRASH_UNLESS(il2cpp_utils::RunMethod<Array<Il2CppObject*>*>("UnityEngine", "Resources", "FindObjectsOfTypeAll", il2cpp_utils::GetSystemType(nameSpace, className)));
-    if(ObjectArray != nullptr) return ObjectArray->values[0];
-    return nullptr;
-}
+std::string game = "GameCore";
+
 //This is to do same as BS_Utils.Utilities.BSEvents.gameSceneLoaded
 MAKE_HOOK_OFFSETLESS(SceneManagerOnActiveSceneChanged, void, Scene previousActiveScene, Scene newActiveScene)
 {
-    SceneManagerOnActiveSceneChanged(previousActiveScene, newActiveScene);
     std::string newActiveSceneName = getSceneStr(newActiveScene);
-    if(newActiveSceneName == game)
-    {
-        Il2CppObject* gameScenesManager = FindObjectsOfTypeAllFirst2("", "GameScenesManager");
-        if(gameScenesManager != nullptr)
-        {
-
-        }
-        OnGameSceneLoaded();
-    }
+    if(newActiveSceneName == game) OnGameSceneLoaded();
+    SceneManagerOnActiveSceneChanged(previousActiveScene, newActiveScene);
 }
 
-
-void OnGameSceneLoaded()
-{
-    if(!modEnabled) return;
-    // Creating GameObject with BlocksBlade since CustomTypes isn't a thing right now so we just hook up to it and use it as CustomType
-    Il2CppObject* failSkipGO = CRASH_UNLESS(il2cpp_utils::NewUnsafe("UnityEngine", "GameObject", il2cpp_utils::createcsstr("FailSkip Behavior")));
-    CRASH_UNLESS(il2cpp_utils::RunMethod(failSkipGO, "AddComponent", il2cpp_utils::GetSystemType("", "BlocksBlade"))); 
-}
-
-void hasFailed()
-{
-    failSkip._hasFailed = true;
-}
-
-
+fastfail failSkip;
 MAKE_HOOK_OFFSETLESS(BlocksBlade_Start, void, Il2CppObject* self)
 {
-    getLogger().info("Works?");
-    failSkip.hasFailed = hasFailed;
     failSkip.autoSkip = Config.autoSkip;
+    failSkip.Destroy();
     failSkip.Awake();
+}
+
+MAKE_HOOK_OFFSETLESS(MissionLevelFailedController_HandleLevelFailed, void, Il2CppObject* self)
+{
+    failSkip._hasFailed = true;
+    MissionLevelFailedController_HandleLevelFailed(self);
+}
+
+MAKE_HOOK_OFFSETLESS(StandardLevelFailedController_HandleLevelFailed, void, Il2CppObject* self)
+{
+    failSkip._hasFailed = true;
+    StandardLevelFailedController_HandleLevelFailed(self);
 }
 
 MAKE_HOOK_OFFSETLESS(BlocksBlade_Update, void, Il2CppObject* self)
@@ -123,6 +78,8 @@ extern "C" void setup(ModInfo &info)
     getLogger().info("Modloader name: %s", Modloader::getInfo().name.c_str());
 }  
 
+void SaveConfig();
+bool LoadConfig();
 // This function is called when the mod is loaded for the first time, immediately after il2cpp_init.
 extern "C" void load()
 {
@@ -131,5 +88,43 @@ extern "C" void load()
     INSTALL_HOOK_OFFSETLESS(BlocksBlade_Start, il2cpp_utils::FindMethodUnsafe("", "BlocksBlade", "Start", 0));
     INSTALL_HOOK_OFFSETLESS(BlocksBlade_Update, il2cpp_utils::FindMethodUnsafe("", "BlocksBlade", "Update", 0));
     INSTALL_HOOK_OFFSETLESS(SceneManagerOnActiveSceneChanged, il2cpp_utils::FindMethodUnsafe("UnityEngine.SceneManagement", "SceneManager", "Internal_ActiveSceneChanged", 2));
+    INSTALL_HOOK_OFFSETLESS(StandardLevelFailedController_HandleLevelFailed, il2cpp_utils::FindMethodUnsafe("", "StandardLevelFailedController", "HandleLevelFailed", 0));
+    INSTALL_HOOK_OFFSETLESS(MissionLevelFailedController_HandleLevelFailed, il2cpp_utils::FindMethodUnsafe("", "MissionLevelFailedController", "HandleLevelFailed", 0));
     getLogger().debug("Installed FastFail!");
+}
+
+std::string getSceneStr(Scene scene)
+{
+    Il2CppString* sceneStr = CRASH_UNLESS(il2cpp_utils::RunMethod<Il2CppString*>(il2cpp_utils::GetClassFromName("UnityEngine.SceneManagement", "Scene"), "GetNameInternal", scene.m_Handle));
+    if(sceneStr != nullptr) return to_utf8(csstrtostr(sceneStr));
+    return nullptr;
+}
+
+void OnGameSceneLoaded()
+{
+    if(!Config.enabled) return;
+    // Creating GameObject with BlocksBlade since CustomTypes isn't a thing right now so we just hook up to it and use it as CustomType
+    Il2CppObject* failSkipGO = CRASH_UNLESS(il2cpp_utils::NewUnsafe("UnityEngine", "GameObject", il2cpp_utils::createcsstr("FailSkip Behavior")));
+    CRASH_UNLESS(il2cpp_utils::RunMethod(failSkipGO, "AddComponent", il2cpp_utils::GetSystemType("", "BlocksBlade"))); 
+}
+
+void SaveConfig()
+{
+    getConfig().config.RemoveAllMembers();
+    getConfig().config.SetObject();
+    auto& allocator = getConfig().config.GetAllocator();
+    getConfig().config.AddMember("enabled", Config.enabled, allocator);
+    getConfig().config.AddMember("autoSkip", Config.autoSkip, allocator);
+    getConfig().Write();
+}
+
+bool LoadConfig()
+{
+    getConfig().Load();
+    if(getConfig().config.HasMember("enabled") && getConfig().config["enabled"].IsBool()) Config.enabled = getConfig().config["enabled"].GetBool(); 
+    else return false;
+    if(getConfig().config.HasMember("autoSkip") && getConfig().config["autoSkip"].IsBool()) Config.autoSkip = getConfig().config["autoSkip"].GetBool(); 
+    else return false;
+
+    return true;
 }

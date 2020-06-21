@@ -16,24 +16,7 @@ void fastfail::Awake()
     _standardLevel = false;
     // Use the appropriate level failed event
     _standardLevelGameplayManager = FindObjectsOfTypeAllFirst("", "StandardLevelGameplayManager");
-    if(_standardLevelGameplayManager != nullptr)
-    {
-        const MethodInfo* addlevelFailedEvent = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(_standardLevelGameplayManager, "add_levelFailedEvent", 1));
-        auto addFailedAction = il2cpp_utils::MakeAction(addlevelFailedEvent, 0, (Il2CppObject*)nullptr, hasFailed);
-        CRASH_UNLESS(il2cpp_utils::RunMethod(_standardLevelGameplayManager, "add_levelFailedEvent", addFailedAction));
-        _standardLevel = true;
-    } 
-    else 
-    {
-        _missionLevelGameplayManager = FindObjectsOfTypeAllFirst("", "MissionLevelGameplayManager");
-        if(_missionLevelGameplayManager != nullptr)
-        {
-            const MethodInfo* addlevelFailedEvent = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(_missionLevelGameplayManager, "add_levelFailedEvent", 1));
-            auto addFailedAction = il2cpp_utils::MakeAction(addlevelFailedEvent, 0, (Il2CppObject*)nullptr, hasFailed);
-            CRASH_UNLESS(il2cpp_utils::RunMethod(_missionLevelGameplayManager, "add_levelFailedEvent", addFailedAction));
-            _standardLevel = false; 
-        }
-    }
+    if(_standardLevelGameplayManager != nullptr) _standardLevel = true; else _standardLevel = false; 
     
     // Get all the necessary fields
     _standardLevelFailedController = FindObjectsOfTypeAllFirst("", "StandardLevelFailedController");
@@ -56,6 +39,21 @@ void fastfail::Awake()
     }
     PauseMenuManager = FindObjectsOfTypeAllFirst("", "PauseMenuManager");
     _vrControllersInputManager = CRASH_UNLESS(il2cpp_utils::GetFieldValue(PauseMenuManager, "_vrControllersInputManager"));
+}
+
+void fastfail::Destroy()
+{
+    //Reseting all pointers, just to be sure!
+    _standardLevelGameplayManager = nullptr; 
+    _standardLevelFailedController = nullptr; 
+    _missionLevelFailedController = nullptr; 
+    _standardLevelSceneSetupData = nullptr;  
+    _standardInitData = nullptr;
+    _missionLevelSceneSetupData = nullptr; 
+    _missionInitData = nullptr; 
+    _missionObjectiveCheckersManager = nullptr; 
+    _prepareLevelCompletionResults = nullptr; 
+    _vrControllersInputManager = nullptr; 
 }
 
 void fastfail::Update()

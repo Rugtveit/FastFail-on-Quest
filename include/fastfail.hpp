@@ -9,15 +9,13 @@
 class fastfail : Il2CppObject
 {
     public:
-        Il2CppObject* classInstance;
         void Update();
         void Awake();
+        void Destroy();
         bool autoSkip;
         bool _hasFailed = false;
-        function_ptr_t<void> hasFailed;
     private:
         Il2CppObject* _standardLevelGameplayManager; //StandardLevelGameplayManager
-        Il2CppObject* _missionLevelGameplayManager; //MissionLevelGameplayManager
         Il2CppObject* _standardLevelFailedController; //StandardLevelFailedController
         Il2CppObject* _missionLevelFailedController; //MissionLevelFailedController
         Il2CppObject* _standardLevelSceneSetupData; //StandardLevelScenesTransitionSetupDataSO
@@ -26,7 +24,6 @@ class fastfail : Il2CppObject
         Il2CppObject* _missionInitData; //MissionLevelFailedController.InitData
         Il2CppObject* _missionObjectiveCheckersManager; //MissionObjectiveCheckersManager
         Il2CppObject* _prepareLevelCompletionResults; //PrepareLevelCompletionResults
-
         Il2CppObject* _vrControllersInputManager; //VRControllersInputManager
         bool _standardLevel;
         bool _skipped = false;
