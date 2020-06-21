@@ -6,10 +6,12 @@
 #include "../extern/beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 #include "../extern/beatsaber-hook/shared/utils/il2cpp-functions.hpp"
 #include "../extern/beatsaber-hook/shared/config/config-utils.hpp"
+#include "../include/FailSkip.hpp"
 
 
 
 static ModInfo modInfo;
+failskip failSkip;
 
 static Configuration& getConfig() {
     static Configuration config(modInfo);
@@ -45,10 +47,21 @@ MAKE_HOOK_OFFSETLESS(SceneManagerOnActiveSceneChanged, void, Scene previousActiv
 
 void OnGameSceneLoaded()
 {
-    if(!modEnabled) return nullptr;
+    if(!modEnabled) return;
     // Creating GameObject with BlocksBlade since CustomTypes isn't a thing right now so we just hook up to it and use it as CustomType
-    Il2CppObject* failSkipGO = CRASH_UNLESS(il2cpp_utils::New("UnityEngine", "GameObject", il2cpp_utils::createcsstr("FailSkip Behavior")));
+    Il2CppObject* failSkipGO = CRASH_UNLESS(il2cpp_utils::NewUnsafe("UnityEngine", "GameObject", il2cpp_utils::createcsstr("FailSkip Behavior")));
     CRASH_UNLESS(il2cpp_utils::RunMethod(failSkipGO, "AddComponent", il2cpp_utils::GetSystemType("", "BlocksBlade"))); 
+}
+
+MAKE_HOOK_OFFSETLESS(BlocksBlade_Start, void, Il2CppObject* self)
+{
+    failSkip.autoSkip = false;
+    failSkip.Awake();
+}
+
+MAKE_HOOK_OFFSETLESS(BlocksBlade_Update, void, Il2CppObject* self)
+{
+    failSkip.Update();
 }
 
 
@@ -66,5 +79,7 @@ extern "C" void setup(ModInfo &info)
 extern "C" void load()
 {
     getLogger().debug("Installing FastFail!");
+    INSTALL_HOOK_OFFSETLESS(BlocksBlade_Start, il2cpp_utils::FindMethodUnsafe("", "BlocksBlade", "Start", 0));
+    INSTALL_HOOK_OFFSETLESS(BlocksBlade_Update, il2cpp_utils::FindMethodUnsafe("", "BlocksBlade", "Update", 0));
     getLogger().debug("Installed FastFail!");
 }
